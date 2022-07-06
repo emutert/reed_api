@@ -4,12 +4,17 @@ import pandas as pd
 import key
 from bs4 import BeautifulSoup
 
+#api authantication
+#to_do: test case, error handling
 auth = HTTPBasicAuth(key.api_key, "")
 session = rq.Session()
 session.auth = auth
 
+# api consuming
+# to_do: test case, error handling 
 df = pd.DataFrame()
 data = []
+
 for i in range(0, 1000, 100):
 
     response = session.get(
@@ -20,14 +25,13 @@ for i in range(0, 1000, 100):
 
 df = df.from_dict(data)
 
-#df[["jobUrl", "jobDescription"]].to_csv(r"data/jobs.csv")
-
-
+#job desc extraction
+#to_do: test case, error handling
 for i in df["jobUrl"]:
     desc = ""
     for text in BeautifulSoup(rq.get(i).text,'html.parser').findAll('span', attrs={"itemprop":"description"}):
         desc += " " + text.text
     df["desc"] = desc
 
-
+#expoert jobs
 df[["jobUrl", "jobDescription","desc"]].to_csv(r"data/jobs.csv")
