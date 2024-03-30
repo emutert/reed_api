@@ -1,58 +1,53 @@
-import requests
-from requests.auth import HTTPBasicAuth
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.corpus import stopwords
+
+from gensim.corpora.dictionary import Dictionary
+from gensim.models import TfidfModel
+from gensim.similarities import Similarity
+
+
+import my_cv
 import pandas as pd
-from bs4 import BeautifulSoup
-import time
-import logging
+import numpy as np
+#cv will read from file
+#file upload will be available
 
-# API authentication (replace with your actual API key)
-API_KEY = "your_api_key_here"
-BASE_URL = "https://www.reed.co.uk/api/1.0/search"
+cv = my_cv.cv2
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+#sentence tokenization
+file_docs = sent_tokenize(cv)
 
-def scrape_job_descriptions(keywords="Application Support", location="London", max_results=1000):
-    """
-    Scrapes job descriptions from Reed API and saves them to a CSV file.
-    Args:
-        keywords (str): Keywords for job search (default: "Application Support").
-        location (str): Location for job search (default: "London").
-        max_results (int): Maximum number of job descriptions to retrieve (default: 1000).
-    """
-    auth = HTTPBasicAuth(API_KEY, "")
-    session = requests.Session()
-    session.auth = auth
+#preprocess
+#tokenization, lowercase, remove punctuation and stops words
+cv_docs = [[w.lower() for w in word_tokenize(text)if w not in stopwords.words('english')if w.isalpha()]for text in file_docs]
 
-    df = pd.DataFrame()
-    data = []
+#documents to dictionary
+dictionary = Dictionary(cv_docs)
 
-    for i in range(0, max_results, 100):
-        try:
-            response = session.get(f"{BASE_URL}?keywords={keywords}&locationName={location}&resultsToSkip={i}")
-            response.raise_for_status()  # Raise an exception if the response status code is not 200
-            data += response.json()["results"]
-            logging.info(f"Retrieved {len(data)} job results")
-            time.sleep(1)  # Throttle requests (1-second delay)
-        except requests.RequestException as e:
-            logging.error(f"Error fetching results: {e}")
+#
+corpus = [dictionary.doc2bow(doc) for doc in cv_docs]
 
-    df = df.from_dict(data)
+tfidf = TfidfModel(corpus)
 
-    descriptions = []
-    for i, job_url in enumerate(df["jobUrl"]):
-        try:
-            soup = BeautifulSoup(requests.get(job_url).text, "html.parser")
-            desc = " ".join(span.text for span in soup.find_all("span", attrs={"itemprop": "description"}))
-            descriptions.append(desc)
-            logging.info(f"Scraped description for job {i + 1}/{len(df)}")
-        except Exception as e:
-            logging.error(f"Error scraping job {i + 1}: {e}")
-            descriptions.append("")  # Placeholder for failed scrapes
+sims = Similarity('data/',tfidf[corpus],num_features=len(dictionary))
 
-    df["desc"] = descriptions
-    df[["jobUrl", "jobDescription", "desc"]].to_csv("data/jobs.csv", index=False)
-    logging.info("Job descriptions saved to jobs.csv")
+#CV / Collected job descs average similarity percantages 
+#to-do: make this file free
+jobs = pd.read_csv('data/jobs.csv')
 
-if __name__ == "__main__":
-    scrape_job_descriptions(keywords="Software Engineer", location="Manchester", max_results=500)
+job_asp =[]
+for i in jobs['desc']:
+    file2_docs = sent_tokenize(i)
+    job_docs = [[w.lower() for w in word_tokenize(text)if w not in stopwords.words('english')if w.isalpha()]for text in file2_docs]
+    query_doc_bow = [dictionary.doc2bow(doc) for doc in job_docs]
+
+    query_doc_tf_idf = tfidf[query_doc_bow]
+
+    sum_of_sims =(np.sum(sims[query_doc_tf_idf], dtype=np.float32))
+    job_asp.append(float(sum_of_sims / len(cv_docs)) * 100)
+
+jobs["asp"]=pd.to_numeric(job_asp)
+
+jobs[jobs.asp >=35].to_csv(r'data/35andbigger.csv')
+
