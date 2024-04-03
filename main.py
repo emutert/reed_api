@@ -18,7 +18,7 @@ data = []
 for i in range(0, 1000, 100):
 
     response = session.get(
-        "https://www.reed.co.uk/api/1.0/search?keywords=Application%20Support&locationName=London&resultsToSkip="
+        " "
         + str(i)
     )
     data += response.json()["results"]
