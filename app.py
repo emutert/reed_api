@@ -20,7 +20,6 @@ def upload_file():
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
             cv_text += page.extract_text()
-            print(cv_text)
         # Create a pandas dataframe from the text or perform further processing
 
         return redirect(url_for('home'))
@@ -46,6 +45,7 @@ def home():
         else : return "Error occurred during job scraping. Please check the input data."
 
         comparator = TextComparator(cv_text)
+        comparator.extract_descriptions_from_job_urls(jobs)
         job_similarity = comparator.compare_jobs(jobs)
         return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
 

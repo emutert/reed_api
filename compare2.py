@@ -6,7 +6,8 @@ from nltk.corpus import stopwords
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import TfidfModel
 from gensim.similarities import Similarity
-
+from bs4 import BeautifulSoup
+import requests
 import pandas as pd
 import numpy as np
 
@@ -37,7 +38,22 @@ class TextComparator:
         except Exception as e:
             print(f"An error occurred during text processing: {e}")
             return None, None, None
-
+        
+    def extract_descriptions_from_job_urls(self,jobs):
+        descriptions = []
+        for url in jobs['jobUrl']:
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    description = soup.find_all("span", itemprop="description").text()
+                    descriptions.append(description)            
+                else:
+                    print(f"Error accessing URL: {url}")
+            except Exception as e:
+                print(f"Error processing URL: {url} - {e}")
+        jobs['fullDescription']= descriptions        
+        return jobs
     def compare_jobs(self, jobs):
         try:
             dictionary, tfidf, corpus = self.process_text()
@@ -47,7 +63,7 @@ class TextComparator:
                 job_asp =[]
                 #check column names in jobs
                 #print(jobs.columns)
-                for desc in jobs['jobDescription']:
+                for desc in jobs['fullDescription']:
                     file2_docs = sent_tokenize(desc)
                     job_docs = [[w.lower() for w in word_tokenize(text) if w not in stopwords.words('english') if w.isalpha()] for text in file2_docs]
                     query_doc_bow = [dictionary.doc2bow(doc) for doc in job_docs]
