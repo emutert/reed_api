@@ -3,9 +3,9 @@ from flask import Flask, request, render_template,redirect,url_for
 from main import JobScraper  # Import your function from the script
 from compare2 import TextComparator  # Import your function from the script
 import key
-import pandas as pd
+
 import PyPDF2
-import jsonify as jsonify
+import flask as jsonify
 app = Flask(__name__)
 
 cv_text = ''
@@ -20,7 +20,7 @@ def upload_file():
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
             cv_text += page.extract_text()
-
+            print(cv_text)
         # Create a pandas dataframe from the text or perform further processing
 
         return redirect(url_for('home'))
@@ -47,13 +47,8 @@ def home():
 
         comparator = TextComparator(cv_text)
         job_similarity = comparator.compare_jobs(jobs)
-        print(job_similarity)
-        global data_dict
-        for col in job_similarity.columns:
-            data_dict[col] = job_similarity[col].values.totlist()
-        
-        return jsonify(data_dict)
-        
+        return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
+
     return render_template('home.html')
 
 if __name__ == "__main__":

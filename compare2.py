@@ -38,21 +38,25 @@ class TextComparator:
             print(f"An error occurred during text processing: {e}")
             return None, None, None
 
-    def compare_jobs(self):
+    def compare_jobs(self, jobs):
         try:
             dictionary, tfidf, corpus = self.process_text()
             if dictionary and tfidf and corpus:
                 sims = Similarity('data/', tfidf[corpus], num_features=len(dictionary))
-                self.jobs['asp']=0
-                print(self.jobs.shape)
-                for desc in self.jobs['desc']:
+                jobs['asp']=0
+                job_asp =[]
+                #check column names in jobs
+                #print(jobs.columns)
+                for desc in jobs['jobDescription']:
                     file2_docs = sent_tokenize(desc)
                     job_docs = [[w.lower() for w in word_tokenize(text) if w not in stopwords.words('english') if w.isalpha()] for text in file2_docs]
                     query_doc_bow = [dictionary.doc2bow(doc) for doc in job_docs]
                     query_doc_tf_idf = tfidf[query_doc_bow]
                     sum_of_sims = np.sum(sims[query_doc_tf_idf], dtype=np.float32)
-                    self.jobs['asp']=pd.to_numeric(float(sum_of_sims / len(corpus)) * 100)
-                return self.jobs
+                    job_asp.append(float(sum_of_sims / len(corpus)) * 100)
+                
+                jobs['asp']=pd.to_numeric(job_asp)
+                return jobs[jobs.asp >=5]
             else:
                 return None
         except Exception as e:
