@@ -56,21 +56,10 @@ class TextComparator:
                     job_asp.append(float(sum_of_sims / len(corpus)) * 100)
                 
                 jobs['asp']=pd.to_numeric(job_asp)
+                # asp is more than 5%
                 return jobs[jobs.asp >=5]
             else:
                 return None
         except Exception as e:
             print(f"An error occurred during job comparison: {e}")
             return None
-"""
-# Example usage with error handling
-cv = my_cv.cv2
-jobs = pd.read_csv('data/jobs.csv')
-comparator = TextComparator(cv)
-job_similarity = comparator.compare_jobs(jobs)
-
-if job_similarity is not None:
-    print(job_similarity)
-else:
-    print("Error occurred during job comparison. Please check the input data.")
-"""
