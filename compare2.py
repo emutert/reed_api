@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import numpy as np
+import time
 
 class TextComparator:
     def __init__(self, cv, jobs=None):
@@ -41,18 +42,27 @@ class TextComparator:
         
     def extract_descriptions_from_job_urls(self,jobs):
         descriptions = []
+        jobs['fullDescription'] = ''
         for url in jobs['jobUrl']:
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
                     soup = BeautifulSoup(response.content, 'html.parser')
-                    description = soup.find_all("span", itemprop="description").text()
-                    descriptions.append(description)            
+                    description = ""
+                    for el in soup.find_all("span", itemprop="description"):
+                        description +=  str(el.get_text())
+                    
+                    jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = description
+                    #descriptions.append(description)           
                 else:
                     print(f"Error accessing URL: {url}")
+                    time.sleep(10)
+                     
             except Exception as e:
                 print(f"Error processing URL: {url} - {e}")
-        jobs['fullDescription']= descriptions        
+                
+            
+        #jobs['fullDescription']= descriptions        
         return jobs
     def compare_jobs(self, jobs):
         try:
@@ -73,7 +83,7 @@ class TextComparator:
                 
                 jobs['asp']=pd.to_numeric(job_asp)
                 # asp is more than 5%
-                return jobs[jobs.asp >=5]
+                return jobs[jobs.asp >=50]
             else:
                 return None
         except Exception as e:
