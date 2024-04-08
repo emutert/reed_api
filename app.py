@@ -45,8 +45,8 @@ def home():
         else : return "Error occurred during job scraping. Please check the input data."
 
         comparator = TextComparator(cv_text)
-        comparator.extract_descriptions_from_job_urls(jobs)
-        job_similarity = comparator.compare_jobs(jobs)
+        job_similarity = comparator.extract_descriptions_from_job_urls(jobs)
+
         return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
 
     return render_template('home.html')

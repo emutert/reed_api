@@ -13,9 +13,12 @@ import numpy as np
 import time
 
 class TextComparator:
-    def __init__(self, cv, jobs=None):
+    def __init__(self, cv, dictionary=None, tfidf=None, corpus=None,job_description=None):
         self.cv = cv
-        self.jobs = jobs
+        self.dictionary = dictionary
+        self.tfidf = tfidf
+        self.corpus = corpus
+        self.jobs = job_description
 
     def process_text(self):
  
@@ -41,51 +44,55 @@ class TextComparator:
             return None, None, None
         
     def extract_descriptions_from_job_urls(self,jobs):
-        descriptions = []
+        # CV processing
+        dictionary, tfidf, corpus = self.process_text()
         jobs['fullDescription'] = ''
+        cnt = 0
         for url in jobs['jobUrl']:
             try:
-                response = requests.get(url)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    description = ""
-                    for el in soup.find_all("span", itemprop="description"):
-                        description +=  str(el.get_text())
-                    
-                    jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = description
-                    #descriptions.append(description)           
+                while cnt < 50: 
+                    cnt += 1
+                    response = requests.get(url)
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.content, 'html.parser')
+                        description = ""
+                        for el in soup.find_all("span", itemprop="description"):
+                            description +=  str(el.get_text())
+                        # Add the description to the dataframe
+                        jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = description
+                        # find the ASP value and add it to the dataframe
+                        jobs.loc[jobs['jobUrl'] == url, 'asp'] = self.compare_job(dictionary, tfidf, corpus,description)
+                    else:
+                        print(f"Error accessing URL: {url}")
+                        
                 else:
-                    print(f"Error accessing URL: {url}")
-                    time.sleep(10)
-                     
+                    cnt = 0
+                    time.sleep(2.5)
+                        
             except Exception as e:
                 print(f"Error processing URL: {url} - {e}")
-                
-            
+ 
         #jobs['fullDescription']= descriptions        
         return jobs
-    def compare_jobs(self, jobs):
+    def compare_job(self,dictionary, tfidf, corpus, job_description):
         try:
-            dictionary, tfidf, corpus = self.process_text()
+            
             if dictionary and tfidf and corpus:
                 sims = Similarity('data/', tfidf[corpus], num_features=len(dictionary))
-                jobs['asp']=0
-                job_asp =[]
-                #check column names in jobs
-                #print(jobs.columns)
-                for desc in jobs['fullDescription']:
-                    file2_docs = sent_tokenize(desc)
-                    job_docs = [[w.lower() for w in word_tokenize(text) if w not in stopwords.words('english') if w.isalpha()] for text in file2_docs]
-                    query_doc_bow = [dictionary.doc2bow(doc) for doc in job_docs]
-                    query_doc_tf_idf = tfidf[query_doc_bow]
-                    sum_of_sims = np.sum(sims[query_doc_tf_idf], dtype=np.float32)
-                    job_asp.append(float(sum_of_sims / len(corpus)) * 100)
-                
-                jobs['asp']=pd.to_numeric(job_asp)
+
+                # CV and Job Description Comparison 
+                file2_docs = sent_tokenize(job_description)
+                job_docs = [[w.lower() for w in word_tokenize(text) if w not in stopwords.words('english') if w.isalpha()] for text in file2_docs]
+                query_doc_bow = [dictionary.doc2bow(doc) for doc in job_docs]
+                query_doc_tf_idf = tfidf[query_doc_bow]
+                sum_of_sims = np.sum(sims[query_doc_tf_idf], dtype=np.float32)
+                #job_asp.append(float(sum_of_sims / len(corpus)) * 100)
+                #jobs['asp']=pd.to_numeric(job_asp)
                 # asp is more than 5%
-                return jobs[jobs.asp >=50]
+                #return jobs[jobs.asp >=50]
+                return float(sum_of_sims / len(corpus)) * 100
             else:
-                return None
+                return 0
         except Exception as e:
             print(f"An error occurred during job comparison: {e}")
-            return None
+            return 0
