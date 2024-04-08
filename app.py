@@ -35,20 +35,21 @@ def home():
         scraper = JobScraper(key.api_key, "https://www.reed.co.uk/api/1.0/search?keywords="+ job_name +"&locationName=London&resultsToSkip=")
         scraper.get_data()
         
+        if scraper.df is not None:
+            jobs = scraper.df
+            print("length of jobs is ",len(jobs))
+        else : return "Error occurred during job scraping. Please check the input data."
+        # Call TextComparator with the imported cv_text and base_url
+        comparator = TextComparator(cv_text)
+        # This is for extracting job description from website and compare with cv
+        job_similarity = comparator.extract_descriptions_from_job_urls(jobs)
+
         # This is for extracting job description from website
         #scraper.extract_descriptions()
         #scraper.export_jobs(r"data/"+job_name+".csv")
         #return "jobs.csv has been created."
-
-        if scraper.df is not None:
-            jobs = scraper.df
-        else : return "Error occurred during job scraping. Please check the input data."
-
-        comparator = TextComparator(cv_text)
-        job_similarity = comparator.extract_descriptions_from_job_urls(jobs)
-
-        return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
-
+        job_similarity[["jobUrl", "jobDescription", "asp"]].to_csv(r"data/"+job_name+".csv")
+        return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()        
     return render_template('home.html')
 
 if __name__ == "__main__":
