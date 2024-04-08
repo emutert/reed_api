@@ -48,8 +48,12 @@ def home():
         #scraper.extract_descriptions()
         #scraper.export_jobs(r"data/"+job_name+".csv")
         #return "jobs.csv has been created."
-        job_similarity[["jobUrl", "jobDescription", "asp"]].to_csv(r"data/"+job_name+".csv")
-        return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()        
+        #job_similarity[["jobUrl", "jobDescription", "asp"]].to_csv(r"data/"+job_name+".csv")
+        job_similarity_result = job_similarity[['jobUrl', 'jobDescription', 'asp']]
+        #return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
+        return render_template('job_similarity.html', job_similarity_result=job_similarity_result)
+
+        
     return render_template('home.html')
 
 if __name__ == "__main__":

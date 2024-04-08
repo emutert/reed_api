@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Similarity Data</title>
+    <link rel="stylesheet" type="text/css" href="static/css/styles.css">
+</head>
+<body>
+    <h1>Job Similarity Data</h1>
+    <table border="1" class="dataframe data">
+        <thead>
+            <tr style="text-align: right;">
+                <th>Index</th>
+                <th>jobUrl</th>
+                <th>jobDescription</th>
+                <th>asp</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for index, row in job_similarity_result.iterrows() %}
+                <tr style="text-align: right;">
+                    <th>{{ index }}</th> 
+                    <th><a href="{{ row['jobUrl'] }}">{{ row['jobUrl'] }}</a></th>
+                    <th>{{ row['jobDescription'] }}</th>
+                    <th>{{ row['asp'] }}</th>
+                </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

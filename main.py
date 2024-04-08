@@ -12,7 +12,7 @@ class JobScraper:
         self.base_url = base_url
         self.df = pd.DataFrame()
 
-    def get_data(self, start_range=0, end_range=1000, step=100):
+    def get_data(self, start_range=0, end_range=1, step=1):
         data = []
         for i in range(start_range, end_range, step):
             try:

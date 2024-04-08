@@ -26,3 +26,24 @@ input[type="submit"] {
     border-radius: 5px;
     cursor: pointer;
 }
+/* Style for the table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Style for table header */
+th {
+    background-color: #3fdb10;
+}
+
+/* Style for table rows */
+tr:nth-child(even) {
+    background-color: #19be95;
+}
+
+/* Style for table cells */
+td, th {
+    border: 1px solid black;
+    padding: 8px;
+}
