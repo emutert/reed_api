@@ -6,10 +6,10 @@ from nltk.corpus import stopwords
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import TfidfModel
 from gensim.similarities import Similarity
-from bs4 import BeautifulSoup
-import requests
+#from bs4 import BeautifulSoup
+#import requests
 import numpy as np
-import time
+#import time
 
 class TextComparator:
     def __init__(self, cv, dictionary=None, tfidf=None, corpus=None,job_description=None):
@@ -41,7 +41,7 @@ class TextComparator:
         except Exception as e:
             print(f"An error occurred during text processing: {e}")
             return None, None, None
-    '''
+    
     def calculate_asp(self, url,jobs,job_description):
         try:
             dictionary, tfidf, corpus = self.process_text()
@@ -50,6 +50,8 @@ class TextComparator:
         except Exception as e:
             print(f"An error occurred during text processing: {e}")
             return None  
+        
+    '''
     def extract_descriptions_from_job_urls(self,jobs):
         # CV processing
         dictionary, tfidf, corpus = self.process_text()

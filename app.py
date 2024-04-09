@@ -3,13 +3,21 @@ from flask import Flask, request, render_template,redirect,url_for
 from main import JobScraper  # Import your function from the script
 from compare2 import TextComparator  # Import your function from the script
 import key
-
+import asyncio
 import PyPDF2
 
 app = Flask(__name__)
 
 cv_text = ''
 full_description = ''
+
+async def process_job_similarity( cv_text, url, jobs):
+    comparator = TextComparator(cv_text)
+    full_description = await asyncio.to_thread(JobScraper.extract_descriptions, cv_text,url)
+    jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
+    await asyncio.to_thread(comparator.calculate_asp, url,jobs,full_description)
+    job_similarity_result = jobs[['jobUrl', 'jobDescription', 'asp']][jobs.asp >= 35]
+    return job_similarity_result
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -55,12 +63,15 @@ def home():
         comparator = TextComparator(cv_text)
         # This is for extracting job description from website and compare with cv
         #job_similarity = comparator.extract_descriptions_from_job_urls(jobs)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         for url in jobs['jobUrl']:
             try:
-                full_description = scraper.extract_descriptions(url)
-                jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
+                #full_description = scraper.extract_descriptions(url)
+                #jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
                 # find the ASP value and add it to the dataframe
-                comparator.calculate_asp(url,jobs,full_description)
+                #comparator.calculate_asp(url,jobs,full_description)
+                job_similarity_result=loop.run_until_complete(process_job_similarity(cv_text, url, jobs))
             except Exception as e:
                 print(f"Error processing URL: {url} - {e}") 
         # This is for extracting job description from website
@@ -68,7 +79,7 @@ def home():
         #scraper.export_jobs(r"data/"+job_name+".csv")
         #return "jobs.csv has been created."
         #job_similarity[["jobUrl", "jobDescription", "asp"]].to_csv(r"data/"+job_name+".csv")
-        job_similarity_result = jobs[['jobUrl', 'jobDescription', 'asp']]
+        #job_similarity_result = jobs[['jobUrl', 'jobDescription', 'asp']][jobs.asp >= 35]
         #return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
         return render_template('job_similarity.html', job_similarity_result=job_similarity_result)
 
