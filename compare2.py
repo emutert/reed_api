@@ -41,7 +41,15 @@ class TextComparator:
         except Exception as e:
             print(f"An error occurred during text processing: {e}")
             return None, None, None
-        
+    '''
+    def calculate_asp(self, url,jobs,job_description):
+        try:
+            dictionary, tfidf, corpus = self.process_text()
+            jobs.loc[jobs['jobUrl'] == url, 'asp'] = self.compare_job(dictionary, tfidf, corpus,job_description)
+            return None  
+        except Exception as e:
+            print(f"An error occurred during text processing: {e}")
+            return None  
     def extract_descriptions_from_job_urls(self,jobs):
         # CV processing
         dictionary, tfidf, corpus = self.process_text()
@@ -74,6 +82,8 @@ class TextComparator:
  
         # asp is more than 35%        
         return jobs[jobs.asp >=35]
+        '''
+    
     def compare_job(self,dictionary, tfidf, corpus, job_description):
         
         try:
