@@ -12,7 +12,7 @@ class JobScraper:
         self.df = pd.DataFrame()
         self.job_url = job_url
 
-    def get_data(self, start_range=0, end_range=1, step=1):
+    def get_data(self, start_range=0, end_range=2, step=1):
         """
         This method sends a series of API requests to collect job data and store it in a pandas DataFrame
 
@@ -39,12 +39,13 @@ class JobScraper:
             print(f"Error in exporting jobs: {e}")
 
 
-def extract_descriptions( job_url):
+def extract_descriptions( jobs,job_url):
     try:
         desc = ""
         for text in BeautifulSoup(rq.get(job_url).text, 'html.parser').findAll('span', attrs={"itemprop": "description"}):
             desc += " " + text.text
-        return desc
+        jobs.loc[jobs['jobUrl'] == job_url, 'fullDescription'] = desc
+        return None
     except Exception as e:
         print(f"Error in extracting job description: {e}")
 

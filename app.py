@@ -11,11 +11,16 @@ app = Flask(__name__)
 cv_text = ''
 full_description = ''
 
-async def process_job_similarity( cv_text, url, jobs):
+async def process_job_similarity( cv_text, jobs):
     comparator = TextComparator(cv_text)
-    full_description = await asyncio.to_thread(extract_descriptions, url)
-    jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
-    await asyncio.to_thread(comparator.calculate_asp, url,jobs,full_description)
+    tasks = []
+    for url in jobs['jobUrl']:
+        tasks.append(asyncio.create_task(asyncio.to_thread(extract_descriptions, jobs,url)))
+        tasks.append(asyncio.create_task(asyncio.to_thread(comparator.calculate_asp, url,jobs)))
+    await asyncio.gather(*tasks)
+    #full_description = await asyncio.to_thread(extract_descriptions, url)
+    #jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
+    #await asyncio.to_thread(comparator.calculate_asp, url,jobs,full_description)
     job_similarity_result = jobs[['jobUrl', 'jobDescription', 'asp']][jobs.asp >= 35]
     return job_similarity_result
 
@@ -65,7 +70,9 @@ def home():
         #job_similarity = comparator.extract_descriptions_from_job_urls(jobs)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        for url in jobs['jobUrl']:
+        
+        job_similarity_result=loop.run_until_complete(process_job_similarity(cv_text, jobs))
+        '''for url in jobs['jobUrl']:
             try:
                 #full_description = scraper.extract_descriptions(url)
                 #jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
@@ -74,7 +81,7 @@ def home():
                 job_similarity_result=loop.run_until_complete(process_job_similarity(cv_text, url, jobs))
             except Exception as e:
                 print(f"Error processing URL: {url} - {e}") 
-        
+        '''
         # This is for extracting job description from website
         #scraper.extract_descriptions()
         #scraper.export_jobs(r"data/"+job_name+".csv")

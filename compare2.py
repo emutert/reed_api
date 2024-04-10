@@ -42,10 +42,12 @@ class TextComparator:
             print(f"An error occurred during text processing: {e}")
             return None, None, None
     
-    def calculate_asp(self, url,jobs,job_description):
+    def calculate_asp(self, url,jobs):
         try:
+            
             dictionary, tfidf, corpus = self.process_text()
-            jobs.loc[jobs['jobUrl'] == url, 'asp'] = self.compare_job(dictionary, tfidf, corpus,job_description)
+            jd = " ".join(jobs.loc[jobs['jobUrl'] == url, 'fullDescription'].astype(str))
+            jobs.loc[jobs['jobUrl'] == url, 'asp'] = self.compare_job(dictionary, tfidf, corpus, jd)
             return None  
         except Exception as e:
             print(f"An error occurred during text processing: {e}")
