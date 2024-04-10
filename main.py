@@ -32,19 +32,20 @@ class JobScraper:
                 print(f"Error occurred during GET request: {err}")
         self.df = self.df.from_dict(data)
 
-    def extract_descriptions(self, job_url):
-
-        try:
-            desc = ""
-            for text in BeautifulSoup(rq.get(job_url).text, 'html.parser').findAll('span', attrs={"itemprop": "description"}):
-                desc += " " + text.text
-            return desc
-        except Exception as e:
-            print(f"Error in extracting job description: {e}")
-
-
     def export_jobs(self, file_path):
         try:
-            self.df[["jobUrl", "jobDescription", "desc"]].to_csv(file_path)
+            self.df.to_csv(file_path)
         except Exception as e:
             print(f"Error in exporting jobs: {e}")
+
+
+def extract_descriptions( job_url):
+    try:
+        desc = ""
+        for text in BeautifulSoup(rq.get(job_url).text, 'html.parser').findAll('span', attrs={"itemprop": "description"}):
+            desc += " " + text.text
+        return desc
+    except Exception as e:
+        print(f"Error in extracting job description: {e}")
+
+

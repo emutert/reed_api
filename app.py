@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request, render_template,redirect,url_for
-from main import JobScraper  # Import your function from the script
+from main import JobScraper, extract_descriptions  # Import your function from the script
 from compare2 import TextComparator  # Import your function from the script
 import key
 import asyncio
@@ -13,7 +13,7 @@ full_description = ''
 
 async def process_job_similarity( cv_text, url, jobs):
     comparator = TextComparator(cv_text)
-    full_description = await asyncio.to_thread(JobScraper.extract_descriptions, cv_text,url)
+    full_description = await asyncio.to_thread(extract_descriptions, url)
     jobs.loc[jobs['jobUrl'] == url, 'fullDescription'] = full_description
     await asyncio.to_thread(comparator.calculate_asp, url,jobs,full_description)
     job_similarity_result = jobs[['jobUrl', 'jobDescription', 'asp']][jobs.asp >= 35]
@@ -74,13 +74,14 @@ def home():
                 job_similarity_result=loop.run_until_complete(process_job_similarity(cv_text, url, jobs))
             except Exception as e:
                 print(f"Error processing URL: {url} - {e}") 
+        
         # This is for extracting job description from website
         #scraper.extract_descriptions()
         #scraper.export_jobs(r"data/"+job_name+".csv")
         #return "jobs.csv has been created."
         #job_similarity[["jobUrl", "jobDescription", "asp"]].to_csv(r"data/"+job_name+".csv")
-        #job_similarity_result = jobs[['jobUrl', 'jobDescription', 'asp']][jobs.asp >= 35]
-        #return job_similarity[['jobUrl', 'jobDescription', 'asp']].to_html()
+        #return "jobs.csv has been created."
+        
         return render_template('job_similarity.html', job_similarity_result=job_similarity_result)
 
         
